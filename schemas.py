@@ -53,7 +53,7 @@ class OrderIn(BaseModel):
 
 # Order Output Schema (for returning order data)
 class OrderOut(BaseModel):
-    product: ProductOut   # Ensure this field is correctly annotated with 'int'
+    product : int   # Ensure this field is correctly annotated with 'int'
     total_amount : int
 
     class Config:
