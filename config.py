@@ -1,0 +1,3 @@
+import os
+RAZORPAY_KEY = os.getenv('RAZORPAY_KEY')
+RAZORPAY_SECRET = os.getenv('RAZORPAY_SECRET')
