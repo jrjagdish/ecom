@@ -31,7 +31,7 @@ class Cart(Model):
 
 class Order(Model):
     id = fields.IntField(pk=True)
-    product = fields.ForeignKeyField('models.Product', related_name='orders')
+    cart = fields.ForeignKeyField('models.Cart', related_name='orders')
     total_amount = fields.FloatField()
 
     

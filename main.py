@@ -51,14 +51,20 @@ async def view_cart( current_user : str = Depends(get_current_user)):
     items = await Cart.all().prefetch_related("product")
     return items
 
-@app.post("/create-order/", response_model=schemas.OrderOut)
-async def create_order(order_in:schemas.OrderIn):
-    response = await crud.create_order_from_cart(order_in.product_id, order_in.quantity)
+@app.post("/create-order/")
+async def create_order(put:schemas.OrderIn):
+    response = await crud.create_order_from_cart(put.cart_id, put.quantity)
     
-    return response 
+    return response
 
+@app.get("/view_order/{order_id}",response_model=schemas.OrderOut)
+async def view_order_endpoint(order_id: int):
+    order = await crud.get_order(order_id)
+    return order
 
-@app.post("/payment/razorpay/{order_id}/")
-async def generate_razorpay_payment_link(order_id: int):
-    return await payment.create_razorpay_payment_link(order_id)
+@app.delete("/delete_order/{order_id}")
+async def delete_order_endpoint(order_id: int):
+    result = await crud.delete_order(order_id)
+    return result
+
 

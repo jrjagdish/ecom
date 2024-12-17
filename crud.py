@@ -3,6 +3,7 @@ from models import User, Product,Cart,Order
 import security
 from fastapi import HTTPException, status
 from tortoise.exceptions import IntegrityError
+from payment import create_payment_link
 
 
 
@@ -80,20 +81,61 @@ async def cartitems(product_id : int,quantity:int):
 
 
 
-async def create_order_from_cart( product_id: int,quantity : int):
-        
-        items = await Product.get(id =  product_id)
-        
-        if not items:
-            raise HTTPException(status_code=404, detail="items not found")
+async def create_order_from_cart(cart_id: int, quantity: int):
+    
+    buy = await Cart.filter(id=cart_id).prefetch_related("product")
 
-        total_amount = items.price * quantity 
+    if not buy:
+        raise HTTPException(status_code=404, detail="Items not found")
+
+    total_amount = 0
+
+   
+    cart_instance = buy[0]  
+    for item in buy:
+        if not item.product:
+            raise HTTPException(status_code=400, detail="Product not found in cart")
+
+        total_amount += item.product.price * quantity  
+    order = await Order.create(
+        cart=cart_instance, 
+        total_amount=total_amount
+    )
+
+
+
+    
+    return {"msg:order created visit to payment and view your order"}
+
+
+async def get_order(order_id: int):
+    try:
         
-        # Create the order
-        order = await Order.create(
-             product_id=  product_id,
-            total_amount=total_amount
-            
-        )
-         
-        return order
+        order = await Order.get(id=order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        
+        payment_link = await create_payment_link(order.id, order.total_amount)
+        
+        return {
+            "order_id": order.id,
+            "total_amount": order.total_amount,
+            "status": order.status,
+            "payment_link": payment_link
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching order: {str(e)}")
+    
+async def delete_order(order_id: int):
+        
+        order = await Order.get(id=order_id)
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+
+        await order.delete()
+        
+        return {"msg": "Order deleted successfully"}    
+    
